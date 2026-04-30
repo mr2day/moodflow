@@ -1,0 +1,346 @@
+<main class="app-shell">
+  <header class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div>
+        <p class="eyebrow">Moodflow</p>
+        <h1>Discern your feel-good patterns.</h1>
+      </div>
+    </div>
+    <div class="today-stamp">
+      <span>{{ formatDisplayDate(todayKey) }}</span>
+      <strong>{{ formatTime(now) }}</strong>
+    </div>
+  </header>
+
+  <nav class="tabbar" aria-label="Primary">
+    <button
+      *ngFor="let tab of tabs; trackBy: trackById"
+      type="button"
+      class="tab-button"
+      [class.active]="activeTab === tab.id"
+      (click)="setTab(tab.id)"
+    >
+      <lucide-angular [name]="tab.icon" size="18"></lucide-angular>
+      <span>{{ tab.label }}</span>
+    </button>
+  </nav>
+
+  <section class="content" [ngSwitch]="activeTab">
+    <section *ngSwitchCase="'today'" class="view today-view">
+      <div class="hero-panel" [class.closed]="!activePrompt">
+        <div>
+          <p class="eyebrow">{{ focusPrompt.label }}</p>
+          <h2>
+            <ng-container *ngIf="activePrompt; else noOpenPrompt">How are you feeling right now?</ng-container>
+            <ng-template #noOpenPrompt>{{ statusLabel(focusPrompt) }}</ng-template>
+          </h2>
+        </div>
+        <div class="prompt-time">
+          <lucide-angular name="clock" size="18"></lucide-angular>
+          <span>{{ focusPrompt.time }}</span>
+        </div>
+      </div>
+
+      <div class="slot-strip">
+        <article *ngFor="let slot of todaySlots; trackBy: trackBySlot" class="slot-card" [ngClass]="slot.status">
+          <div>
+            <strong>{{ slot.label }}</strong>
+            <span>{{ slot.time }}</span>
+          </div>
+          <p>{{ statusLabel(slot) }}</p>
+        </article>
+      </div>
+
+      <form class="checkin-form" (ngSubmit)="saveCurrentPrompt()">
+        <fieldset [disabled]="!activePrompt">
+          <section class="question-block">
+            <h3>How are you feeling right now?</h3>
+            <div class="option-grid mood-grid">
+              <button
+                *ngFor="let option of moodOptions; trackBy: trackById"
+                type="button"
+                class="option-button mood-option"
+                [class.selected]="draft.mood === option.id"
+                (click)="selectMood(option.id)"
+              >
+                <span class="emoji">{{ option.emoji }}</span>
+                <span>{{ option.label }}</span>
+                <small>{{ option.score }}/5</small>
+              </button>
+            </div>
+          </section>
+
+          <section class="question-block">
+            <h3>Where are you?</h3>
+            <div class="option-grid compact-grid">
+              <button
+                *ngFor="let option of locationOptions; trackBy: trackById"
+                type="button"
+                class="option-button"
+                [class.selected]="draft.location === option.id"
+                (click)="selectLocation(option.id)"
+              >
+                <span class="emoji">{{ option.emoji }}</span>
+                <span>{{ option.label }}</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="question-block">
+            <h3>Who are you with?</h3>
+            <div class="option-grid compact-grid">
+              <button
+                *ngFor="let option of companionOptions; trackBy: trackById"
+                type="button"
+                class="option-button"
+                [class.selected]="draft.companion === option.id"
+                (click)="selectCompanion(option.id)"
+              >
+                <span class="emoji">{{ option.emoji }}</span>
+                <span>{{ option.label }}</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="question-block">
+            <h3>What are you doing?</h3>
+            <div class="option-grid compact-grid">
+              <button
+                *ngFor="let option of activityOptions; trackBy: trackById"
+                type="button"
+                class="option-button"
+                [class.selected]="draft.activity === option.id"
+                (click)="selectActivity(option.id)"
+              >
+                <span class="emoji">{{ option.emoji }}</span>
+                <span>{{ option.label }}</span>
+              </button>
+            </div>
+          </section>
+
+          <label class="note-field">
+            <span>Add a note <small>optional</small></span>
+            <textarea
+              name="note"
+              rows="3"
+              [(ngModel)]="draft.note"
+              placeholder="What mattered today?"
+            ></textarea>
+            <small [class.warning]="noteWordCount > 20">{{ noteWordCount }}/20 words</small>
+          </label>
+        </fieldset>
+
+        <button type="submit" class="primary-action" [disabled]="!canSave">
+          <lucide-angular name="check" size="18"></lucide-angular>
+          <span>Save check-in</span>
+        </button>
+      </form>
+    </section>
+
+    <section *ngSwitchCase="'calendar'" class="view calendar-view">
+      <div class="month-toolbar">
+        <button type="button" class="icon-button" aria-label="Previous month" (click)="previousMonth()">
+          <lucide-angular name="chevron-left" size="20"></lucide-angular>
+        </button>
+        <h2>{{ monthLabel }}</h2>
+        <button type="button" class="icon-button" aria-label="Next month" (click)="nextMonth()">
+          <lucide-angular name="chevron-right" size="20"></lucide-angular>
+        </button>
+      </div>
+
+      <div class="calendar-grid" aria-label="Month calendar">
+        <span class="weekday">Sun</span>
+        <span class="weekday">Mon</span>
+        <span class="weekday">Tue</span>
+        <span class="weekday">Wed</span>
+        <span class="weekday">Thu</span>
+        <span class="weekday">Fri</span>
+        <span class="weekday">Sat</span>
+
+        <button
+          *ngFor="let day of calendarDays; trackBy: trackByDate"
+          type="button"
+          class="day-cell"
+          [class.muted]="!day.inMonth"
+          [class.today]="day.isToday"
+          [class.selected]="selectedDateKey === day.dateKey"
+          [ngClass]="day.status"
+          (click)="chooseDate(day.dateKey)"
+        >
+          <span>{{ day.day }}</span>
+          <strong *ngIf="day.average">{{ day.average }}</strong>
+        </button>
+      </div>
+
+      <section class="detail-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">{{ selectedDateLabel }}</p>
+          <h3>Check-ins</h3>
+        </div>
+
+        <article *ngFor="let slot of selectedDaySlots; trackBy: trackBySlot" class="history-row" [ngClass]="slot.status">
+          <div>
+            <strong>{{ slot.label }}</strong>
+            <span>{{ slot.time }}</span>
+          </div>
+
+          <ng-container *ngIf="slot.entry as entry; else emptySlot">
+            <p>{{ entrySummary(entry) }}</p>
+            <small>{{ formatEntryTime(entry) }}</small>
+            <blockquote *ngIf="entry.note">{{ entry.note }}</blockquote>
+            <button type="button" class="ghost-button danger" (click)="deleteEntry(entry)">
+              <lucide-angular name="trash-2" size="16"></lucide-angular>
+              <span>Delete</span>
+            </button>
+          </ng-container>
+
+          <ng-template #emptySlot>
+            <p>{{ statusLabel(slot) }}</p>
+          </ng-template>
+        </article>
+      </section>
+    </section>
+
+    <section *ngSwitchCase="'stats'" class="view stats-view">
+      <div class="month-toolbar">
+        <button type="button" class="icon-button" aria-label="Previous month" (click)="previousMonth()">
+          <lucide-angular name="chevron-left" size="20"></lucide-angular>
+        </button>
+        <h2>{{ monthLabel }}</h2>
+        <button type="button" class="icon-button" aria-label="Next month" (click)="nextMonth()">
+          <lucide-angular name="chevron-right" size="20"></lucide-angular>
+        </button>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric-tile">
+          <p>Average mood</p>
+          <strong>{{ summary.average ?? 'No data' }}</strong>
+        </article>
+        <article class="metric-tile">
+          <p>Vs last month</p>
+          <strong *ngIf="summary.change !== null; else noChange">
+            {{ summary.change > 0 ? '+' : '' }}{{ summary.change }}
+          </strong>
+          <ng-template #noChange><strong>No data</strong></ng-template>
+        </article>
+        <article class="metric-tile">
+          <p>Check-ins</p>
+          <strong>{{ summary.entries.length }}</strong>
+        </article>
+      </div>
+
+      <section class="chart-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">Monthly chart</p>
+          <h3>Mood by day</h3>
+        </div>
+        <div class="bar-chart">
+          <div
+            *ngFor="let point of summary.chart"
+            class="bar-column"
+            [title]="point.average ? point.dateKey + ': ' + point.average : point.dateKey + ': no data'"
+          >
+            <span class="bar" [class.empty]="!point.average" [style.height.%]="point.height"></span>
+            <small *ngIf="point.day === 1 || point.day % 5 === 0">{{ point.day }}</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="insight-grid">
+        <article class="insight-panel">
+          <lucide-angular name="sparkles" size="18"></lucide-angular>
+          <div>
+            <p>Best context</p>
+            <strong *ngIf="summary.bestContext as best; else noBest">
+              {{ best.label }} at {{ best.average }}
+            </strong>
+            <ng-template #noBest><strong>No data</strong></ng-template>
+          </div>
+        </article>
+
+        <article class="insight-panel">
+          <lucide-angular name="timer-reset" size="18"></lucide-angular>
+          <div>
+            <p>Hardest context</p>
+            <strong *ngIf="summary.worstContext as worst; else noWorst">
+              {{ worst.label }} at {{ worst.average }}
+            </strong>
+            <ng-template #noWorst><strong>No data</strong></ng-template>
+          </div>
+        </article>
+
+        <article class="insight-panel">
+          <lucide-angular name="calendar-days" size="18"></lucide-angular>
+          <div>
+            <p>Best day</p>
+            <strong *ngIf="summary.bestDay as bestDay; else noBestDay">
+              {{ formatDisplayDate(bestDay.dateKey) }} at {{ bestDay.average }}
+            </strong>
+            <ng-template #noBestDay><strong>No data</strong></ng-template>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section *ngSwitchCase="'settings'" class="view settings-view">
+      <section class="settings-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">Schedule</p>
+          <h2>Daily reminders</h2>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span>First check-in</span>
+            <input type="time" name="midday" [(ngModel)]="settingsDraft.reminderTimes.midday" />
+          </label>
+          <label>
+            <span>Second check-in</span>
+            <input type="time" name="evening" [(ngModel)]="settingsDraft.reminderTimes.evening" />
+          </label>
+        </div>
+
+        <button type="button" class="toggle-row" [class.enabled]="settingsDraft.notificationsEnabled" (click)="toggleNotifications()">
+          <lucide-angular name="bell" size="18"></lucide-angular>
+          <span>Notifications</span>
+          <strong>{{ settingsDraft.notificationsEnabled ? 'On' : 'Off' }}</strong>
+        </button>
+      </section>
+
+      <section class="settings-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">Profile</p>
+          <h2>Local identity</h2>
+        </div>
+
+        <label class="wide-field">
+          <span>Email</span>
+          <input type="email" name="profileEmail" [(ngModel)]="settingsDraft.profileEmail" placeholder="name@example.com" />
+        </label>
+      </section>
+
+      <div class="action-row">
+        <button type="button" class="primary-action" (click)="saveSettings()">
+          <lucide-angular name="check" size="18"></lucide-angular>
+          <span>Save settings</span>
+        </button>
+        <button type="button" class="secondary-action" (click)="exportData()">
+          <lucide-angular name="download" size="18"></lucide-angular>
+          <span>Export</span>
+        </button>
+        <button type="button" class="secondary-action danger" (click)="clearEntries()">
+          <lucide-angular name="trash-2" size="18"></lucide-angular>
+          <span>Clear</span>
+        </button>
+      </div>
+
+      <p class="status-message" *ngIf="notificationStatus">{{ notificationStatus }}</p>
+    </section>
+  </section>
+</main>
