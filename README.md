@@ -45,6 +45,15 @@ Native notifications are scheduled only inside a Capacitor native build. The bro
 
 Building the Android APK requires a local JDK and `JAVA_HOME` configured for Gradle.
 
+On Windows, the helper scripts in `scripts/` avoid multiline terminal setup:
+
+```bat
+scripts\setup-android-env.cmd
+scripts\build-debug-apk.cmd
+```
+
+`setup-android-env.cmd` permanently sets `JAVA_HOME` and `ANDROID_HOME` for the current Windows user. `build-debug-apk.cmd` builds the tester APK using Android Studio's bundled JDK and prints the APK path when it finishes.
+
 ## Current MVP Features
 
 - Today view with two scheduled check-in slots
