@@ -56,6 +56,17 @@
         </article>
       </div>
 
+      <section class="catchup-panel" *ngIf="canStartManualCheckin">
+        <div>
+          <p class="eyebrow">No open window</p>
+          <h3>Record a check-in now</h3>
+        </div>
+        <button type="button" class="secondary-action" (click)="startManualCheckin()">
+          <lucide-angular name="clock" size="18"></lucide-angular>
+          <span>Record now</span>
+        </button>
+      </section>
+
       <form class="checkin-form" (ngSubmit)="saveCurrentPrompt()">
         <fieldset [disabled]="!activePrompt">
           <section class="question-block">

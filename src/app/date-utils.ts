@@ -25,6 +25,12 @@ export function localDateTimeKey(dateKey: string, time: string): string {
   return `${dateKey}T${time}:00`;
 }
 
+export function timeFromDate(date: Date): string {
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${hour}:${minute}`;
+}
+
 export function formatDisplayDate(dateKey: string): string {
   return dateFromKey(dateKey).toLocaleDateString(undefined, {
     weekday: 'short',

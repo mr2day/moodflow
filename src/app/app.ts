@@ -11,6 +11,7 @@ import {
   shiftMonth,
   toDateKey,
   toMonthKey,
+  timeFromDate,
 } from './date-utils';
 import { MonthSummary, summarizeMonth } from './moodflow.analytics';
 import { MoodflowNotifications } from './notification.service';
@@ -77,6 +78,7 @@ export class App implements OnInit, OnDestroy {
   settingsDraft: MoodSettings = { ...DEFAULT_SETTINGS, reminderTimes: { ...DEFAULT_SETTINGS.reminderTimes } };
   entries: MoodEntry[] = [];
   draft: MoodDraft = emptyMoodDraft();
+  manualPrompt: PromptSlot | null = null;
   viewMonthKey = toMonthKey(new Date());
   selectedDateKey = toDateKey(new Date());
   notificationStatus = '';
@@ -112,7 +114,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   get activePrompt(): PromptSlot | undefined {
-    return this.todaySlots.find((slot) => slot.status === 'open');
+    return this.todaySlots.find((slot) => slot.status === 'open') ?? this.manualPrompt ?? undefined;
   }
 
   get focusPrompt(): PromptSlot {
@@ -121,6 +123,10 @@ export class App implements OnInit, OnDestroy {
       this.todaySlots.find((slot) => slot.status === 'upcoming') ??
       this.todaySlots[this.todaySlots.length - 1]
     );
+  }
+
+  get canStartManualCheckin(): boolean {
+    return !this.activePrompt && this.todaySlots.some((slot) => slot.status !== 'answered');
   }
 
   get noteWordCount(): number {
@@ -240,6 +246,30 @@ export class App implements OnInit, OnDestroy {
 
     this.entries = this.store.saveEntry(entry);
     this.draft = emptyMoodDraft();
+    this.manualPrompt = null;
+  }
+
+  startManualCheckin(): void {
+    if (this.activePrompt) {
+      return;
+    }
+
+    const baseSlot = this.todaySlots.find((slot) => slot.status !== 'answered');
+
+    if (!baseSlot) {
+      return;
+    }
+
+    const startedAt = new Date();
+    this.manualPrompt = {
+      ...baseSlot,
+      label: `${baseSlot.label} now`,
+      time: timeFromDate(startedAt),
+      scheduledAt: startedAt,
+      expiresAt: new Date(startedAt.getTime() + 60 * 60 * 1000),
+      status: 'open',
+      manual: true,
+    };
   }
 
   deleteEntry(entry: MoodEntry): void {
@@ -262,6 +292,7 @@ export class App implements OnInit, OnDestroy {
   async saveSettings(): Promise<void> {
     this.settings = this.cloneSettings(this.settingsDraft);
     this.store.saveSettings(this.settings);
+    this.manualPrompt = null;
     this.notificationStatus = await this.notifications.sync(this.settings);
   }
 
@@ -313,6 +344,10 @@ export class App implements OnInit, OnDestroy {
   }
 
   statusLabel(slot: PromptSlot): string {
+    if (slot.manual && slot.status === 'open') {
+      return 'Manual check-in';
+    }
+
     if (slot.status === 'answered') {
       return 'Answered';
     }

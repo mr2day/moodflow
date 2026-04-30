@@ -179,6 +179,7 @@ h3 {
 }
 
 .hero-panel,
+.catchup-panel,
 .detail-panel,
 .chart-panel,
 .settings-panel {
@@ -269,6 +270,18 @@ h3 {
 .slot-card.open {
   border-color: #27b38f;
   box-shadow: inset 0 0 0 1px rgba(39, 179, 143, 0.28);
+}
+
+.catchup-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+}
+
+.catchup-panel h3 {
+  margin-bottom: 0;
 }
 
 .slot-card.missed,

@@ -33,6 +33,7 @@ export interface PromptSlot {
   scheduledAt: Date;
   expiresAt: Date;
   status: PromptStatus;
+  manual?: boolean;
   entry?: MoodEntry;
 }
 

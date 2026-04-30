@@ -18,9 +18,11 @@ The MVP must not require a backend, real account system, or LLM.
 - Default check-in times are 12:00 and 20:00.
 - The user may change both reminder times.
 - Each check-in stays answerable for 60 minutes after its scheduled time.
+- If no scheduled check-in is currently open, the user may manually start a check-in for the earliest unanswered slot today.
 - Missed check-ins are visible in history and calendar views.
 - Missed check-ins are excluded from mood averages.
 - The user may answer each scheduled check-in once. Saving again for the same date and slot replaces the existing answer.
+- Manual check-ins count as answered entries for the chosen slot and are included in stats.
 - Notes are optional and capped at 20 words.
 - Monthly summaries can be viewed at any time for any month that has data.
 - The "last day of the month" requirement means the monthly summary becomes the natural report for the completed month, not that stats are blocked until the last day.
