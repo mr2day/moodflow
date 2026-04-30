@@ -63,6 +63,10 @@ The app has four primary views:
 - Stats: monthly average, previous-month comparison, chart, and insights.
 - Settings: reminder times, notification toggle, local profile email, export, and clear data.
 
+## Visual Direction
+
+Moodflow should feel warm, emotionally comfortable, and calm. Use a warm palette based on peach, coral, amber, and soft cream, with restrained natural green only as a secondary balancing accent. Avoid cold blue/teal-dominant UI.
+
 ## Data Model
 
 MoodSettings:
