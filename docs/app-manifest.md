@@ -65,7 +65,7 @@ The app has four primary views:
 
 ## Visual Direction
 
-Moodflow should feel warm, emotionally comfortable, and calm. Use a faded pastel palette based on rose pink, muted blush, soft cream, and a pinkish-yellow pastel coral. Avoid cold blue/teal-dominant UI and avoid saturated orange.
+Moodflow should feel warm, emotionally comfortable, and calm. Use a warm palette based on peach, coral, amber, and soft cream, with restrained natural green only as a secondary balancing accent. Avoid cold blue/teal-dominant UI.
 
 ## Data Model
 
