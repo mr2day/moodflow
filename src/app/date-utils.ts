@@ -1,4 +1,4 @@
-import { MoodEntry, MoodSettings, PERIOD_LABELS, PromptSlot } from './moodflow.types';
+import { MoodSettings, PERIOD_LABELS, PromptSlot } from './moodflow.types';
 
 export function toDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -52,18 +52,10 @@ export function shiftMonth(monthKey: string, delta: number): string {
   return toMonthKey(date);
 }
 
-export function buildPromptSlots(
-  dateKey: string,
-  settings: MoodSettings,
-  entries: MoodEntry[],
-  now: Date,
-): PromptSlot[] {
+export function buildPromptSlots(dateKey: string, settings: MoodSettings): PromptSlot[] {
   return (Object.keys(settings.reminderTimes) as Array<keyof typeof settings.reminderTimes>).map((period) => {
     const time = settings.reminderTimes[period];
     const scheduledAt = localDateTime(dateKey, time);
-    const expiresAt = new Date(scheduledAt.getTime() + 60 * 60 * 1000);
-    const entry = entries.find((item) => item.dateKey === dateKey && item.period === period);
-    const status = entry ? 'answered' : now < scheduledAt ? 'upcoming' : now <= expiresAt ? 'open' : 'missed';
 
     return {
       dateKey,
@@ -71,9 +63,8 @@ export function buildPromptSlots(
       label: PERIOD_LABELS[period],
       time,
       scheduledAt,
-      expiresAt,
-      status,
-      entry,
+      expiresAt: scheduledAt,
+      status: 'reminder',
     };
   });
 }

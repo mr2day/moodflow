@@ -3,7 +3,7 @@ export type MoodLevel = 'great' | 'good' | 'reasonable' | 'low';
 export type LocationOption = 'home' | 'work' | 'out';
 export type CompanionOption = 'alone' | 'partner' | 'friends' | 'family' | 'colleagues';
 export type ActivityOption = 'working' | 'relaxing' | 'chores' | 'socializing' | 'hobbies';
-export type PromptStatus = 'answered' | 'open' | 'missed' | 'upcoming';
+export type PromptStatus = 'reminder';
 export type TabId = 'today' | 'calendar' | 'stats' | 'settings';
 
 export interface MoodSettings {
@@ -15,8 +15,8 @@ export interface MoodSettings {
 export interface MoodEntry {
   id: string;
   dateKey: string;
-  period: PromptPeriod;
-  scheduledFor: string;
+  period?: PromptPeriod;
+  scheduledFor?: string;
   answeredAt: string;
   mood: MoodLevel;
   location: LocationOption;
@@ -33,8 +33,6 @@ export interface PromptSlot {
   scheduledAt: Date;
   expiresAt: Date;
   status: PromptStatus;
-  manual?: boolean;
-  entry?: MoodEntry;
 }
 
 export interface SelectOption<T extends string> {

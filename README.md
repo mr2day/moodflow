@@ -1,6 +1,6 @@
 # Moodflow
 
-Moodflow is a local-first mood tracking app. It asks two quick check-ins per day, stores the answers locally, and shows a calendar, monthly chart, average mood score, and deterministic insights.
+Moodflow is a local-first mood tracking app. It lets the user record quick mood check-ins whenever they want, stores the answers locally, and shows a calendar, monthly chart, average mood score, and deterministic insights.
 
 The product and implementation rules live in [docs/app-manifest.md](docs/app-manifest.md).
 
@@ -56,13 +56,13 @@ scripts\build-debug-apk.cmd
 
 ## Current MVP Features
 
-- Today view with two scheduled check-in slots
+- Today view with always-available mood check-in form
 - Four fixed questions with tap answers
 - Optional note capped at 20 words
 - Local persistence
-- Calendar month view with missed, partial, and complete states
+- Calendar month view with recorded-day states
 - Selected-day history
 - Monthly average, previous-month comparison, chart, best day, and context insights
-- Reminder time settings
+- Reminder time settings for notifications only
 - Native notification scheduling service
 - JSON export and local data clear

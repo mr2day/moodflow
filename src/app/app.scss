@@ -267,27 +267,9 @@ h3 {
   margin: 0;
 }
 
-.slot-card.open {
-  border-color: #27b38f;
-  box-shadow: inset 0 0 0 1px rgba(39, 179, 143, 0.28);
-}
-
-.catchup-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px;
-}
-
-.catchup-panel h3 {
-  margin-bottom: 0;
-}
-
-.slot-card.missed,
-.history-row.missed {
-  border-color: rgba(218, 86, 73, 0.35);
-  background: #fff7f5;
+.slot-card.reminder {
+  border-color: rgba(43, 143, 208, 0.28);
+  background: #f4fbff;
 }
 
 .checkin-form {
@@ -495,14 +477,6 @@ fieldset:disabled {
 
 .day-cell.complete::after {
   background: #27b38f;
-}
-
-.day-cell.partial::after {
-  background: #2b8fd0;
-}
-
-.day-cell.missed::after {
-  background: #da5649;
 }
 
 .day-cell.future::after {

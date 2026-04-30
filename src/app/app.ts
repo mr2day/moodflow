@@ -7,11 +7,9 @@ import {
   dateFromKey,
   formatDisplayDate,
   formatMonthLabel,
-  localDateTimeKey,
   shiftMonth,
   toDateKey,
   toMonthKey,
-  timeFromDate,
 } from './date-utils';
 import { MonthSummary, summarizeMonth } from './moodflow.analytics';
 import { MoodflowNotifications } from './notification.service';
@@ -48,7 +46,7 @@ interface CalendarDay {
   day: number;
   inMonth: boolean;
   isToday: boolean;
-  status: 'complete' | 'partial' | 'missed' | 'empty' | 'future';
+  status: 'complete' | 'empty' | 'future';
   average: number | null;
 }
 
@@ -78,7 +76,6 @@ export class App implements OnInit, OnDestroy {
   settingsDraft: MoodSettings = { ...DEFAULT_SETTINGS, reminderTimes: { ...DEFAULT_SETTINGS.reminderTimes } };
   entries: MoodEntry[] = [];
   draft: MoodDraft = emptyMoodDraft();
-  manualPrompt: PromptSlot | null = null;
   viewMonthKey = toMonthKey(new Date());
   selectedDateKey = toDateKey(new Date());
   notificationStatus = '';
@@ -113,22 +110,6 @@ export class App implements OnInit, OnDestroy {
     return this.slotsForDate(this.todayKey);
   }
 
-  get activePrompt(): PromptSlot | undefined {
-    return this.todaySlots.find((slot) => slot.status === 'open') ?? this.manualPrompt ?? undefined;
-  }
-
-  get focusPrompt(): PromptSlot {
-    return (
-      this.activePrompt ??
-      this.todaySlots.find((slot) => slot.status === 'upcoming') ??
-      this.todaySlots[this.todaySlots.length - 1]
-    );
-  }
-
-  get canStartManualCheckin(): boolean {
-    return !this.activePrompt && this.todaySlots.some((slot) => slot.status !== 'answered');
-  }
-
   get noteWordCount(): number {
     const note = this.draft.note.trim();
     return note ? note.split(/\s+/).length : 0;
@@ -136,7 +117,6 @@ export class App implements OnInit, OnDestroy {
 
   get canSave(): boolean {
     return (
-      !!this.activePrompt &&
       !!this.draft.mood &&
       !!this.draft.location &&
       !!this.draft.companion &&
@@ -154,24 +134,17 @@ export class App implements OnInit, OnDestroy {
       const date = new Date(start);
       date.setDate(start.getDate() + index);
       const dateKey = toDateKey(date);
-      const slots = this.slotsForDate(dateKey);
       const dayEntries = this.entries.filter((entry) => entry.dateKey === dateKey);
       const average =
         dayEntries.length === 0
           ? null
           : this.roundOne(dayEntries.reduce((total, entry) => total + moodScore(entry.mood), 0) / dayEntries.length);
       const isFuture = dateFromKey(dateKey) > dateFromKey(this.todayKey);
-      const answered = slots.filter((slot) => slot.status === 'answered').length;
-      const missed = slots.filter((slot) => slot.status === 'missed').length;
       const status: CalendarDay['status'] = isFuture
         ? 'future'
-        : answered === slots.length
+        : dayEntries.length > 0
           ? 'complete'
-          : missed > 0
-            ? 'missed'
-            : answered > 0
-              ? 'partial'
-              : 'empty';
+          : 'empty';
 
       return {
         dateKey,
@@ -182,10 +155,6 @@ export class App implements OnInit, OnDestroy {
         average,
       };
     });
-  }
-
-  get selectedDaySlots(): PromptSlot[] {
-    return this.slotsForDate(this.selectedDateKey);
   }
 
   get selectedDayEntries(): MoodEntry[] {
@@ -225,18 +194,15 @@ export class App implements OnInit, OnDestroy {
   }
 
   saveCurrentPrompt(): void {
-    const prompt = this.activePrompt;
-
-    if (!prompt || !this.canSave) {
+    if (!this.canSave) {
       return;
     }
 
+    const answeredAt = new Date();
     const entry: MoodEntry = {
       id: this.store.createId(),
-      dateKey: prompt.dateKey,
-      period: prompt.period,
-      scheduledFor: localDateTimeKey(prompt.dateKey, prompt.time),
-      answeredAt: new Date().toISOString(),
+      dateKey: toDateKey(answeredAt),
+      answeredAt: answeredAt.toISOString(),
       mood: this.draft.mood as MoodLevel,
       location: this.draft.location as LocationOption,
       companion: this.draft.companion as CompanionOption,
@@ -246,30 +212,6 @@ export class App implements OnInit, OnDestroy {
 
     this.entries = this.store.saveEntry(entry);
     this.draft = emptyMoodDraft();
-    this.manualPrompt = null;
-  }
-
-  startManualCheckin(): void {
-    if (this.activePrompt) {
-      return;
-    }
-
-    const baseSlot = this.todaySlots.find((slot) => slot.status !== 'answered');
-
-    if (!baseSlot) {
-      return;
-    }
-
-    const startedAt = new Date();
-    this.manualPrompt = {
-      ...baseSlot,
-      label: `${baseSlot.label} now`,
-      time: timeFromDate(startedAt),
-      scheduledAt: startedAt,
-      expiresAt: new Date(startedAt.getTime() + 60 * 60 * 1000),
-      status: 'open',
-      manual: true,
-    };
   }
 
   deleteEntry(entry: MoodEntry): void {
@@ -292,7 +234,6 @@ export class App implements OnInit, OnDestroy {
   async saveSettings(): Promise<void> {
     this.settings = this.cloneSettings(this.settingsDraft);
     this.store.saveSettings(this.settings);
-    this.manualPrompt = null;
     this.notificationStatus = await this.notifications.sync(this.settings);
   }
 
@@ -323,7 +264,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   slotsForDate(dateKey: string): PromptSlot[] {
-    return buildPromptSlots(dateKey, this.settings, this.entries, this.now);
+    return buildPromptSlots(dateKey, this.settings);
   }
 
   optionLabel<T extends string>(options: SelectOption<T>[], id: T): string {
@@ -344,23 +285,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   statusLabel(slot: PromptSlot): string {
-    if (slot.manual && slot.status === 'open') {
-      return 'Manual check-in';
-    }
-
-    if (slot.status === 'answered') {
-      return 'Answered';
-    }
-
-    if (slot.status === 'open') {
-      return `Open until ${this.formatTime(slot.expiresAt)}`;
-    }
-
-    if (slot.status === 'missed') {
-      return 'Missed';
-    }
-
-    return `Opens at ${slot.time}`;
+    return `Reminder at ${slot.time}`;
   }
 
   formatTime(date: Date): string {

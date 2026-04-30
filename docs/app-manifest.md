@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Moodflow is a small local-first mood tracking app that helps a user notice patterns in when and where they feel better or worse. The app asks the same four simple questions twice per day, saves quick answers, and turns the month into a readable calendar, chart, average mood score, and deterministic insights.
+Moodflow is a small local-first mood tracking app that helps a user notice patterns in when and where they feel better or worse. The app lets the user answer the same four simple questions whenever they want, sends optional reminders twice per day, and turns the month into a readable calendar, chart, average mood score, and deterministic insights.
 
 The product promise is: discern your feel-good patterns.
 
@@ -14,15 +14,13 @@ The MVP must not require a backend, real account system, or LLM.
 
 ## Product Rules
 
-- The app asks two check-ins per day.
-- Default check-in times are 12:00 and 20:00.
+- The user can record a check-in at any time.
+- The app may send two reminder notifications per day.
+- Default reminder times are 12:00 and 20:00.
 - The user may change both reminder times.
-- Each check-in stays answerable for 60 minutes after its scheduled time.
-- If no scheduled check-in is currently open, the user may manually start a check-in for the earliest unanswered slot today.
-- Missed check-ins are visible in history and calendar views.
-- Missed check-ins are excluded from mood averages.
-- The user may answer each scheduled check-in once. Saving again for the same date and slot replaces the existing answer.
-- Manual check-ins count as answered entries for the chosen slot and are included in stats.
+- Reminder times are only for notifications. They never restrict data entry.
+- There is no answer window, missed prompt state, or replacement-by-slot behavior in the MVP.
+- Every saved check-in is a separate entry and is included in stats.
 - Notes are optional and capped at 20 words.
 - Monthly summaries can be viewed at any time for any month that has data.
 - The "last day of the month" requirement means the monthly summary becomes the natural report for the completed month, not that stats are blocked until the last day.
@@ -60,8 +58,8 @@ The original document listed Reasonable as score 2. The MVP uses score 3 because
 
 The app has four primary views:
 
-- Today: current prompt state, answer form, and today's slots.
-- Calendar: month grid, missed/answered markers, selected-day details.
+- Today: answer form and today's reminder schedule.
+- Calendar: month grid, recorded-day markers, selected-day details.
 - Stats: monthly average, previous-month comparison, chart, and insights.
 - Settings: reminder times, notification toggle, local profile email, export, and clear data.
 
@@ -78,8 +76,6 @@ MoodEntry:
 
 - id: stable unique id
 - dateKey: YYYY-MM-DD in local time
-- period: midday or evening
-- scheduledFor: local ISO-like datetime string
 - answeredAt: ISO timestamp
 - mood: great, good, reasonable, or low
 - location: home, work, or out
@@ -87,7 +83,7 @@ MoodEntry:
 - activity: working, relaxing, chores, socializing, or hobbies
 - note: optional text
 
-Missed prompts are generated from settings, dates, current time, and missing entries. They do not need to be stored.
+Reminder notifications are generated from settings. Mood entries are not tied to reminder slots.
 
 ## Analytics
 
@@ -132,7 +128,7 @@ When notifications are enabled in a native build:
 - Request notification permission.
 - Schedule two repeating local notifications using the configured times.
 - Each notification opens the app to the Today view.
-- The app still enforces the 60-minute response window internally.
+- Notifications are reminders only. The app must allow recording before, during, and after reminder times.
 
 Browser preview builds can save the notification setting but cannot guarantee native notification behavior.
 

@@ -31,10 +31,7 @@ export class MoodflowStore {
 
   saveEntry(entry: MoodEntry): MoodEntry[] {
     const entries = this.loadEntries();
-    const withoutSameSlot = entries.filter(
-      (item) => !(item.dateKey === entry.dateKey && item.period === entry.period),
-    );
-    const next = [...withoutSameSlot, entry].sort((a, b) => a.scheduledFor.localeCompare(b.scheduledFor));
+    const next = [...entries, entry].sort((a, b) => a.answeredAt.localeCompare(b.answeredAt));
     localStorage.setItem(ENTRIES_KEY, JSON.stringify(next));
     return next;
   }

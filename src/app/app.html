@@ -32,17 +32,14 @@
 
   <section class="content" [ngSwitch]="activeTab">
     <section *ngSwitchCase="'today'" class="view today-view">
-      <div class="hero-panel" [class.closed]="!activePrompt">
+      <div class="hero-panel">
         <div>
-          <p class="eyebrow">{{ focusPrompt.label }}</p>
-          <h2>
-            <ng-container *ngIf="activePrompt; else noOpenPrompt">How are you feeling right now?</ng-container>
-            <ng-template #noOpenPrompt>{{ statusLabel(focusPrompt) }}</ng-template>
-          </h2>
+          <p class="eyebrow">New check-in</p>
+          <h2>How are you feeling right now?</h2>
         </div>
         <div class="prompt-time">
           <lucide-angular name="clock" size="18"></lucide-angular>
-          <span>{{ focusPrompt.time }}</span>
+          <span>{{ formatTime(now) }}</span>
         </div>
       </div>
 
@@ -56,19 +53,8 @@
         </article>
       </div>
 
-      <section class="catchup-panel" *ngIf="canStartManualCheckin">
-        <div>
-          <p class="eyebrow">No open window</p>
-          <h3>Record a check-in now</h3>
-        </div>
-        <button type="button" class="secondary-action" (click)="startManualCheckin()">
-          <lucide-angular name="clock" size="18"></lucide-angular>
-          <span>Record now</span>
-        </button>
-      </section>
-
       <form class="checkin-form" (ngSubmit)="saveCurrentPrompt()">
-        <fieldset [disabled]="!activePrompt">
+        <fieldset>
           <section class="question-block">
             <h3>How are you feeling right now?</h3>
             <div class="option-grid mood-grid">
@@ -194,26 +180,20 @@
           <h3>Check-ins</h3>
         </div>
 
-        <article *ngFor="let slot of selectedDaySlots; trackBy: trackBySlot" class="history-row" [ngClass]="slot.status">
+        <article *ngFor="let entry of selectedDayEntries; trackBy: trackByEntry" class="history-row complete">
           <div>
-            <strong>{{ slot.label }}</strong>
-            <span>{{ slot.time }}</span>
+            <strong>{{ formatEntryTime(entry) }}</strong>
+            <span>Recorded</span>
           </div>
-
-          <ng-container *ngIf="slot.entry as entry; else emptySlot">
-            <p>{{ entrySummary(entry) }}</p>
-            <small>{{ formatEntryTime(entry) }}</small>
-            <blockquote *ngIf="entry.note">{{ entry.note }}</blockquote>
-            <button type="button" class="ghost-button danger" (click)="deleteEntry(entry)">
-              <lucide-angular name="trash-2" size="16"></lucide-angular>
-              <span>Delete</span>
-            </button>
-          </ng-container>
-
-          <ng-template #emptySlot>
-            <p>{{ statusLabel(slot) }}</p>
-          </ng-template>
+          <p>{{ entrySummary(entry) }}</p>
+          <button type="button" class="ghost-button danger" (click)="deleteEntry(entry)">
+            <lucide-angular name="trash-2" size="16"></lucide-angular>
+            <span>Delete</span>
+          </button>
+          <blockquote *ngIf="entry.note">{{ entry.note }}</blockquote>
         </article>
+
+        <p class="empty-state" *ngIf="selectedDayEntries.length === 0">No check-ins recorded for this day.</p>
       </section>
     </section>
 
